@@ -1,1 +1,1 @@
-# cotw-fastapi-gcp-advanced-rec
+# cotw-fastapi-gcp-advanced
