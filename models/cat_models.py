@@ -45,6 +45,7 @@ class CurrentRoundCatBase(BaseCatModel):
     likes: int = 0
     dislikes: int = 0
     votes: int = 0
+    voted_users_ids: list[str] = Field(default_factory=list)
 
 
 class CurrentRoundCatCreate(CurrentRoundCatBase):
