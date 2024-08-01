@@ -55,6 +55,10 @@ class CurrentRoundCat(CurrentRoundCatBase):
     id: str
 
 
+class CurrentRoundCatES(CurrentRoundCat):
+    voted_users_ids: list[str] = Field(default_factory=list)
+
+
 class CurrentRoundCatWithImage(CurrentRoundCat, CatImageURL):
     pass
 

@@ -1,3 +1,5 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 from tempfile import TemporaryDirectory
 from google.cloud.storage import Client
@@ -54,3 +56,23 @@ def delete_blob_by_file_name(file_name: str) -> None:
         print(f"Deleted {file_name} from storage")
     except NotFound:
         print(f"{file_name} not found in storage")
+
+
+
+async def async_generate_signed_url(file_name):
+    loop = asyncio.get_running_loop()
+
+    ## Options:
+
+    # 1. Run in the default loop's executor:
+    result = await loop.run_in_executor(
+        None, generate_signed_url, file_name)
+   
+
+    # # 2. Run in a custom thread pool:
+    # with ThreadPoolExecutor() as pool:
+    #     result = await loop.run_in_executor(
+    #         pool, generate_signed_url, file_name)
+    #     print('custom thread pool', result)
+
+    return result

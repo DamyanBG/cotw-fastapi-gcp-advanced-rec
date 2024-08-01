@@ -10,13 +10,18 @@ from models.cat_models import (
     NextRoundCatWithImage,
     NextRoundCatUpdate,
     CurrentRoundCatWithImage,
+    CurrentRoundCatES,
     CatOfTheWeekWithImage,
 )
 from models.user_models import UserId
 from queries.cat_queries import insert_nrc, select_user_nrc, select_not_voted_cat, select_cat_of_the_week, delete_nr_cat, update_nr_cat
 from queries.image_queries import select_image_file_name_by_id
 from queries.vote_queries import select_voted_cats_ids
-from storage.google_cloud_storage import generate_signed_url
+from storage.google_cloud_storage import generate_signed_url, async_generate_signed_url
+
+from search import es, crc_index_name
+
+from utils.time_measurers import profile_function
 
 
 cats_router = APIRouter(prefix="/cats", tags=["cats"])
@@ -50,25 +55,74 @@ async def get_user_nrc(user_id: UserId = Depends(get_current_user_id)):
         )
 
     nrc_image_file_name = await select_image_file_name_by_id(user_nrc.photo_id)
-    nrc_image_url = generate_signed_url(nrc_image_file_name)
+    nrc_image_url = await async_generate_signed_url(nrc_image_file_name)
     user_ncr_with_image = NextRoundCatWithImage(
         image_url=nrc_image_url, **user_nrc.model_dump()
     )
     return user_ncr_with_image
+
+async def search_unvoted_cats(es, index_name, user_id):
+    query = {
+        "query": {
+            "bool": {
+                "must_not": {
+                    "term": {
+                        "voted_users": user_id
+                    }
+                }
+            }
+        },
+        "sort": [
+            {"votes": {"order": "asc"}}
+        ],
+        "size": 1  # Fetch only the cat with the fewest votes
+    }
+    
+    response = await es.search(index=index_name, body=query)
+    return response
 
 
 @cats_router.get(
     "/cat-for-vote", response_model=Union[CurrentRoundCatWithImage, dict[str, str]]
 )
 async def get_cat_for_vote(user_id: UserId = Depends(get_current_user_id)):
-    user_voted_cats_ids = await select_voted_cats_ids(user_id.id)
+    # user_voted_cats_ids = await select_voted_cats_ids(user_id.id)
+    # try:
+    #     cat_for_vote = await select_not_voted_cat(user_voted_cats_ids)
+    # except NotFound:
+    #     return {"message": "No cat for vote!"}
+    query = {
+        "query": {
+            "bool": {
+                "must_not": {
+                    "term": {
+                        "voted_users_ids": user_id.id
+                    }
+                }
+            }
+        },
+        "sort": [
+            {"votes": {"order": "asc"}}
+        ],
+        "size": 1  # Fetch only the cat with the fewest votes
+    }
     try:
-        cat_for_vote = await select_not_voted_cat(user_voted_cats_ids)
-    except NotFound:
+        response = await es.search(crc_index_name, body=query)
+        # print(response)
+        cat_for_vote = CurrentRoundCatES(**response["hits"]["hits"][0]["_source"])
+
+        if user_id.id in cat_for_vote.voted_users_ids:
+            print("--------------------------------")
+            print("---------PROBLEM-------")
+            print("--------------------------------")
+
+    except Exception as e:
+        print(e)
         return {"message": "No cat for vote!"}
 
     cat_image_file_name = await select_image_file_name_by_id(cat_for_vote.photo_id)
-    cat_image_url = generate_signed_url(cat_image_file_name)
+    # cat_image_url = generate_signed_url(cat_image_file_name)
+    cat_image_url = await async_generate_signed_url(cat_image_file_name)
     cat_for_vote_with_image = CurrentRoundCatWithImage(
         image_url=cat_image_url, **cat_for_vote.model_dump()
     )

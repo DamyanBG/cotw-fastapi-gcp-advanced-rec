@@ -11,9 +11,12 @@ from models.cat_models import (
     NextRoundCatUpdate,
     CurrentRoundCatCreate,
     CurrentRoundCat,
+    CurrentRoundCatES,
     CatOfTheWeekCreate,
     CatOfTheWeek,
 )
+
+from utils.time_measurers import profile_function
 
 nrc_ref = db.collection("NextRoundCats")
 crc_ref = db.collection("CurrentRoundCats")
@@ -45,6 +48,12 @@ async def select_all_nr_cats() -> list[NextRoundCat]:
     docs = [doc async for doc in nrc_ref.stream()]
     next_round_cats = [NextRoundCat(id=doc.id, **doc.to_dict()) for doc in docs]
     return next_round_cats
+
+
+async def select_all_cr_cats_for_es() -> list[CurrentRoundCatES]:
+    docs = [doc async for doc in crc_ref.stream()]
+    current_round_cats = [CurrentRoundCatES(id=doc.id, **doc.to_dict()) for doc in docs]
+    return current_round_cats
 
 
 async def delete_all_nr_cats(cats: list[NextRoundCat]) -> None:
@@ -106,14 +115,15 @@ async def add_dislike(cat_id: str) -> None:
     cat_doc_ref = crc_ref.document(cat_id)
     await cat_doc_ref.update({"dislikes": Increment(1), "votes": Increment(1)})
 
-
-async def select_not_voted_cat(voted_cats_ids: list[str]) -> CurrentRoundCat:
-    print(voted_cats_ids)
-    all_cats_docs = [doc async for doc in crc_ref.stream()]
-    all_cats = [
-        CurrentRoundCat(id=cat_doc.id, **cat_doc.to_dict()) for cat_doc in all_cats_docs
-    ]
-    filtered_cats = [cat for cat in all_cats if cat.id not in voted_cats_ids]
+# @profile_function
+async def select_not_voted_cat(voted_cats_ids: set[str]) -> CurrentRoundCat:
+    all_cats_docs = (doc async for doc in crc_ref.stream())
+    all_cats = (
+        CurrentRoundCat(id=cat_doc.id, **cat_doc.to_dict()) async for cat_doc in all_cats_docs
+    )
+   
+    filtered_cats = [cat async for cat in all_cats if cat.id not in voted_cats_ids]
+    print(len(filtered_cats))
 
     if not filtered_cats:
         raise NotFound("No cat for vote!")

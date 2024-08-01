@@ -10,7 +10,7 @@ from auth.token import create_access_token, get_current_user_id
 user_router = APIRouter(prefix="/users", tags=["users"])
 
 
-@user_router.post("/register", response_model=User)
+@user_router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(user_data: UserCreate):
     existing_user = await select_user_by_email(user_data.email)
     if existing_user:

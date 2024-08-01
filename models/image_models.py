@@ -23,3 +23,7 @@ class Image(ImageBase):
 
 class ImageWithUrl(Image, ImageUrl):
     pass
+
+
+class ImageFileName(BaseModel):
+    file_name: str

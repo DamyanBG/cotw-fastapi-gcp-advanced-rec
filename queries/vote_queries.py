@@ -17,6 +17,7 @@ async def insert_vote(vote_data: VoteCreate) -> Vote:
     return vote
 
 
+# TO DO Try indexing by user id and cat id
 async def select_vote_by_cat_and_user(cat_id: str, user_id: str) -> Optional[Vote]:
     user_id_filter = FieldFilter("user_id", "==", user_id)
     cat_id_filter = FieldFilter("cat_id", "==", cat_id)
@@ -34,5 +35,5 @@ async def select_vote_by_cat_and_user(cat_id: str, user_id: str) -> Optional[Vot
 async def select_voted_cats_ids(user_id: str) -> list[str]:
     filter_by_user_id = FieldFilter("user_id", "==", user_id)
     query = vote_ref.where(filter=filter_by_user_id)
-    cats_ids = [doc.to_dict()["cat_id"] async for doc in query.stream()]
+    cats_ids = {doc.to_dict()["cat_id"] async for doc in query.stream()}
     return cats_ids

@@ -3,10 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from contextlib import asynccontextmanager
+import asyncio
 
 from routers.routes import api_router
 from cron_jobs.round_end import round_end_logic
 from cron_jobs.cleanup_images import cleanup_unused_images
+from search import es, crc_index_name, crc_mapping
+from queries.cat_queries import select_all_cr_cats_for_es
 
 origins = ["*"]
 
@@ -18,10 +21,34 @@ ascheduler.add_job(round_end_logic, CronTrigger(day_of_week="mon", hour=0, minut
 ascheduler.add_job(cleanup_unused_images, CronTrigger(day_of_week="mon", hour=0, minute=45))
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ascheduler.start()
     print("Scheduler started")
+
+    try:
+        await es.create_index_if_not_exists(crc_index_name, crc_mapping)
+        await es.list_all_indices()
+
+        # await es.delete_all_documents(crc_index_name)
+
+        # current_round_cats = await select_all_cr_cats_for_es()
+        # print(len(current_round_cats))
+    
+        # load_cats_to_es_tasks = [es.insert_document(crc_index_name, cat.model_dump()) for cat in current_round_cats]
+        # await asyncio.gather(*load_cats_to_es_tasks)
+        # print("added")
+
+        # result = await es.search(crc_index_name, body={"query": {"match_all": {}}}, size=10000)
+        # cats = result.get("hits").get("hits")
+        # # print(cats)
+        # print(len(cats))
+        
+
+    except Exception as e:
+        print(e)
+
     yield
     ascheduler.shutdown()
     print("Scheduler shut down")
