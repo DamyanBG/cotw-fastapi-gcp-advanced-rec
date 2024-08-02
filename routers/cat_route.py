@@ -69,6 +69,7 @@ async def get_user_nrc(user_id: UserId = Depends(get_current_user_id)):
 async def get_cat_for_vote(user_id: UserId = Depends(get_current_user_id)):
     try:
         cat_for_vote = await search_cat_for_vote(user_id.id)
+        print(cat_for_vote)
 
     except Exception:
         return {"message": "No cat for vote!"}

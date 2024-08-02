@@ -9,6 +9,7 @@ async def search_cat_for_vote(user_id: str) -> CurrentRoundCatES:
         "query": {"bool": {"must_not": {"term": {"voted_users_ids": user_id}}}},
         "sort": [{"votes": {"order": "asc"}}],
         "size": 1,
+        # "request_cache": False
     }
 
     response = await es.search(crc_index_name, body=query)
@@ -28,9 +29,10 @@ async def search_cat_by_id(cat_id: str) -> tuple[CurrentRoundCatES, str]:
 
 
 async def replace_cat(crc_cat: CurrentRoundCatES, crc_cat_doc_id):
-    await es.replace_document(
+    resp = await es.replace_document(
         crc_index_name, crc_cat.model_dump(), doc_id=crc_cat_doc_id
     )
+    print(resp)
 
 
 async def delete_cats_with_votes():

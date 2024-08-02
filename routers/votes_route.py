@@ -16,13 +16,14 @@ async def post_vote(
     vote_data: VoteData, user_id: UserId = Depends(get_current_user_id)
 ):
     crc_cat, cat_doc_id = await search_cat_by_id(vote_data.cat_id)
+    print(crc_cat.voted_users_ids)
 
     if user_id.id in crc_cat.voted_users_ids:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You already voted for this cat!",
         )
-
+    
     crc_cat.voted_users_ids.append(user_id.id)
     await replace_cat(crc_cat, cat_doc_id)
 
