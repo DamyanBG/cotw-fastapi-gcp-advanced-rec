@@ -55,7 +55,7 @@ class Search:
         return await self._es.index(index=index_name, body=document)
 
     async def replace_document(self, index_name: str, document: dict, doc_id: str):
-        return await self._es.index(index=index_name, body=document, id=doc_id)
+        return await self._es.index(index=index_name, body=document, id=doc_id, refresh=True)
 
     async def update_document(self, index_name, doc_id, document):
         await self._es.update(index=index_name, id=doc_id, body=document)
