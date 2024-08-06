@@ -11,6 +11,7 @@ from queries.user_queries import (
 )
 from auth.password import hash_password, validate_hashed_password
 from auth.token import create_access_token, get_current_user_id
+from redis_logic import acquire_lock
 
 
 user_router = APIRouter(prefix="/users", tags=["users"])
@@ -18,16 +19,22 @@ user_router = APIRouter(prefix="/users", tags=["users"])
 
 @user_router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(user_data: UserCreate):
-    existing_user = await select_user_by_email(user_data.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email is already registered!",
-        )
+    try:
+        async with acquire_lock(user_data.email):
+            existing_user = await select_user_by_email(user_data.email)
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email is already registered!",
+                )
 
-    user_data.password = hash_password(user_data.password)
-    new_user = await insert_user(user_data)
-    return new_user
+            user_data.password = hash_password(user_data.password)
+            new_user = await insert_user(user_data)
+        return new_user
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Registering of this email is in process!"
+        )
 
 
 @user_router.post("/login", response_model=Token)

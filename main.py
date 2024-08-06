@@ -1,25 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from contextlib import asynccontextmanager
 
 from routers.routes import api_router
-from cron_jobs.round_end import round_end_logic
-from cron_jobs.cleanup_images import cleanup_unused_images
-from search import es, crc_index_name, crc_mapping
-
-
-origins = ["*"]
-
-
-ascheduler = AsyncIOScheduler()
-
-
-ascheduler.add_job(round_end_logic, CronTrigger(day_of_week="mon", hour=0, minute=30))
-ascheduler.add_job(
-    cleanup_unused_images, CronTrigger(day_of_week="mon", hour=0, minute=45)
-)
+from async_job_scheduler import ascheduler
+from es_queries.creator import create_es_indices
 
 
 @asynccontextmanager
@@ -27,18 +12,15 @@ async def lifespan(app: FastAPI):
     ascheduler.start()
     print("Scheduler started")
 
-    try:
-        await es.create_index_if_not_exists(crc_index_name, crc_mapping)
-        await es.list_all_indices()
-
-    except Exception as e:
-        print(e)
+    await create_es_indices()
 
     yield
+
     ascheduler.shutdown()
     print("Scheduler shut down")
 
 
+origins = ["*"]
 app = FastAPI(lifespan=lifespan)
 app.include_router(api_router)
 app.add_middleware(
