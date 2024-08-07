@@ -8,3 +8,11 @@ async def create_es_indices():
 
     except Exception as e:
         print(e)
+
+
+async def delete_es_index():
+    try:
+        await es.delete_index(crc_index_name)
+
+    except Exception as e:
+        print(e)

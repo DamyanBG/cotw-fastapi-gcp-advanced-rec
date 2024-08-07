@@ -23,7 +23,7 @@ async def post_vote(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You already voted for this cat!",
         )
-    
+
     crc_cat.voted_users_ids.append(user_id.id)
     await replace_cat(crc_cat, cat_doc_id)
 

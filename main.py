@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from routers.routes import api_router
 from async_job_scheduler import ascheduler
-from es_queries.creator import create_es_indices
+from es_queries.creator import create_es_indices, delete_es_index
 
 
 @asynccontextmanager
@@ -13,6 +13,8 @@ async def lifespan(app: FastAPI):
     print("Scheduler started")
 
     await create_es_indices()
+
+    # await delete_es_index()
 
     yield
 

@@ -15,9 +15,9 @@ async def print_something():
 
 ascheduler = AsyncIOScheduler()
 ascheduler.add_job(round_end_logic, CronTrigger(day_of_week="mon", hour=0, minute=30))
-ascheduler.add_job(
-    job_lock_wrapper("some_key", print_something), IntervalTrigger(seconds=10)
-)
+# ascheduler.add_job(
+#     job_lock_wrapper("some_key", print_something), IntervalTrigger(seconds=10)
+# )
 ascheduler.add_job(
     cleanup_unused_images, CronTrigger(day_of_week="mon", hour=0, minute=45)
 )

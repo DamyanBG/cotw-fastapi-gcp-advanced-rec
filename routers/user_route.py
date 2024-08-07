@@ -33,7 +33,8 @@ async def create_user(user_data: UserCreate):
         return new_user
     except:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Registering of this email is in process!"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Registering of this email is in process!",
         )
 
 
