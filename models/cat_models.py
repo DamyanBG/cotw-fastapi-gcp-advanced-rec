@@ -56,7 +56,8 @@ class CurrentRoundCat(CurrentRoundCatBase):
 
 
 class CurrentRoundCatES(CurrentRoundCat):
-    voted_users_ids: list[str] = Field(default_factory=list)
+    likes_voted_users_ids: list[str] = Field(default_factory=list)
+    dislikes_voted_users_ids: list[str] = Field(default_factory=list)
 
 
 class CurrentRoundCatWithImage(CurrentRoundCat, CatImageURL):

@@ -6,7 +6,12 @@ from models.cat_models import CurrentRoundCatES
 
 async def search_cat_for_vote(user_id: str) -> CurrentRoundCatES:
     query = {
-        "query": {"bool": {"must_not": {"term": {"voted_users_ids": user_id}}}},
+        "query": {"bool": {
+            "must_not": [
+                {"term": {"likes_voted_users_ids": user_id}},
+                {"term": {"dislikes_voted_users_ids": user_id}}
+            ]
+        }},
         "sort": [{"votes": {"order": "asc"}}],
         "size": 1,
         # "request_cache": False
@@ -37,6 +42,19 @@ async def replace_cat(crc_cat: CurrentRoundCatES, crc_cat_doc_id):
 
 async def delete_cats_with_votes():
     await es.delete_all_documents(crc_index_name)
+
+
+async def select_all_cats_with_votes() -> list[CurrentRoundCatES]:
+    query = {
+        "query": {
+            "match_all": {}
+        },
+        # TO DO - to create logic to take more than 1000 entities
+        "size": 1000
+    }
+    response = await es.search(crc_index_name, body=query)
+    all_cats_with_votes = [CurrentRoundCatES(**cat["_source"]) for cat in response["hits"]["hits"]]
+    return all_cats_with_votes
 
 
 async def insert_es_current_round_cats(es_crc: list[CurrentRoundCatES]) -> None:

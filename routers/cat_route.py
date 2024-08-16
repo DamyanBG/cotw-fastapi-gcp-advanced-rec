@@ -72,6 +72,7 @@ async def get_cat_for_vote(user_id: UserId = Depends(get_current_user_id)):
         print(cat_for_vote)
 
     except Exception:
+        print(f"no more cats for {user_id.id}")
         return {"message": "No cat for vote!"}
 
     cat_image_file_name = await select_image_file_name_by_id(cat_for_vote.photo_id)

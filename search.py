@@ -20,7 +20,8 @@ crc_mapping = {
             "dislikes": {"type": "integer"},
             "votes": {"type": "integer"},
             "id": {"type": "keyword"},
-            "voted_users_ids": {"type": "keyword"},
+            "likes_voted_users_ids": {"type": "keyword"},
+            "dislikes_voted_users_ids": {"type": "keyword"},
         }
     }
 }

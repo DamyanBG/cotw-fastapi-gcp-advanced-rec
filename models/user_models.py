@@ -22,6 +22,8 @@ class UserBase(BaseModel):
         ..., description="Email of the user", example="john_doe@example.com"
     )
     password: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -38,3 +40,8 @@ class User(UserBase, UserId):
 
 class UserUpdate(UserBase):
     pass
+
+
+class UserLocation(BaseModel):
+    city: str
+    country: str

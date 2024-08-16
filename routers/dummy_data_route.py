@@ -10,6 +10,7 @@ from queries.user_queries import insert_user
 from queries.image_queries import insert_image
 from queries.cat_queries import (
     insert_current_round_cats,
+    insert_next_round_cats,
     insert_nrc,
     insert_cat_of_the_week,
 )
@@ -55,35 +56,37 @@ async def create_dummy_data(number_to_create):
     images = await asyncio.gather(*insert_image_tasks)
 
     # Create dummy current round cats
-    crc_creates = [
-        create_dummy_crc(user.id, image.id) for user, image in zip(users, images)
-    ]
-    await insert_current_round_cats(crc_creates)
+    # crc_creates = [
+    #     create_dummy_crc(user.id, image.id) for user, image in zip(users, images)
+    # ]
+    # await insert_current_round_cats(crc_creates)
 
     # Create dummy next round cat
-    nrc_create = create_dummy_nrc(users[3].id, images[1].id)
-    await insert_nrc(nrc_create)
+    nrc_creats = [
+        create_dummy_nrc(user.id, images[1].id) for user, image in zip(users, images)
+    ]
+    await insert_next_round_cats(nrc_creats)
 
     # Create and upload dummy image for Cat of the Week
-    async with asopen("dummy_data/images/cat_of_the_week.webp", "rb") as f:
-        image_data = await f.read()
-    image_base64 = base64.b64encode(image_data).decode("utf-8")
-    base64_with_data_url = f"data:image/webp;base64,{image_base64}"
+    # async with asopen("dummy_data/images/cat_of_the_week.webp", "rb") as f:
+    #     image_data = await f.read()
+    # image_base64 = base64.b64encode(image_data).decode("utf-8")
+    # base64_with_data_url = f"data:image/webp;base64,{image_base64}"
 
-    image_bytes = compress_image_to_webp(
-        separate_data_url_from_base64(base64_with_data_url)[1]
-    )
-    cofw_image_file_name = upload_bytes_image(image_bytes, ".webp", "image/webp")
-    cotw_image = await insert_image(ImageFileName(file_name=cofw_image_file_name))
+    # image_bytes = compress_image_to_webp(
+    #     separate_data_url_from_base64(base64_with_data_url)[1]
+    # )
+    # cofw_image_file_name = upload_bytes_image(image_bytes, ".webp", "image/webp")
+    # cotw_image = await insert_image(ImageFileName(file_name=cofw_image_file_name))
 
-    # Create dummy Cat of the Week
-    current_date = date.today()
-    iso_calendar = current_date.isocalendar()
-    cotw_create = create_dummy_cotw(users[-1].id, cotw_image.id)
-    cotw_create.year = iso_calendar.year
-    cotw_create.week_number = iso_calendar.week
+    # # Create dummy Cat of the Week
+    # current_date = date.today()
+    # iso_calendar = current_date.isocalendar()
+    # cotw_create = create_dummy_cotw(users[-1].id, cotw_image.id)
+    # cotw_create.year = iso_calendar.year
+    # cotw_create.week_number = iso_calendar.week
 
-    await insert_cat_of_the_week(cotw_create)
+    # await insert_cat_of_the_week(cotw_create)
 
 
 @dummy_data_router.post("/")

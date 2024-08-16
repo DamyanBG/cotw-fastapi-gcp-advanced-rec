@@ -38,9 +38,10 @@ async def google_callback(request: Request):
             last_name=user.last_name,
         )
         user_stored = await insert_user(user_to_add)
+    is_user_complete = bool(user_stored.city) and bool(user_stored.country)
     token = create_access_token(user_stored)
     response = RedirectResponse(
-        url=f"http://localhost:3000/google-auth?token={token}",
+        url=f"http://localhost:3000/google-auth?token={token}&is_user_complete={is_user_complete}",
         status_code=status.HTTP_302_FOUND,
     )
     return response

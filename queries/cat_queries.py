@@ -50,6 +50,16 @@ async def select_all_nr_cats() -> list[NextRoundCat]:
     return next_round_cats
 
 
+async def insert_next_round_cats(cats: list[NextRoundCatCreate]) -> None:
+    cats_dicts = [cat.model_dump() for cat in cats]
+    new_cats_refs = [nrc_ref.document() for _ in range(len(cats_dicts))]
+    insert_operations = [
+        new_cat_ref.set(cat_dict)
+        for cat_dict, new_cat_ref in zip(cats_dicts, new_cats_refs)
+    ]
+    await gather(*insert_operations)
+
+
 async def select_all_cr_cats_for_es() -> list[CurrentRoundCatES]:
     docs = [doc async for doc in crc_ref.stream()]
     current_round_cats = [CurrentRoundCatES(id=doc.id, **doc.to_dict()) for doc in docs]

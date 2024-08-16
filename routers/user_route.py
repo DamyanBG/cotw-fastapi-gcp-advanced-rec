@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from models.user_models import User, UserCreate, UserId, UserUpdate
+from models.user_models import User, UserCreate, UserId, UserUpdate, UserLocation
 from models.credentials_models import Token, Credentials
 from queries.user_queries import (
     insert_user,
@@ -78,3 +78,27 @@ async def update(
     update_data.password = hash_password(update_data.password)
     updated_user = await update_user(update_data, user_id.id)
     return updated_user
+
+
+@user_router.patch("/add-location")
+async def add_location(
+    user_location: UserLocation, user_id: UserId = Depends(get_current_user_id)
+):
+    current_user = await select_user_by_id(user_id.id)
+    user_to_update = UserUpdate(
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        email=current_user.email,
+        password=current_user.password,
+        city=user_location.city,
+        country=user_location.country,
+    )
+    await update_user(user_to_update, user_id.id)
+    return "OK"
+
+
+@user_router.get("/", response_model=User)
+async def get_user(user_id: UserId = Depends(get_current_user_id)):
+    user = await select_user_by_id(user_id.id)
+    return user
+    

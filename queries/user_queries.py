@@ -60,3 +60,9 @@ async def update_user(update_data: UserUpdate, user_id: str) -> User:
         id=user_id, **update_data_dict
     )
     return updated_user
+
+
+async def select_all_users() -> list[User]:
+    docs = [doc async for doc in user_ref.stream()]
+    users = [User(id=doc.id, **doc.to_dict()) for doc in docs]
+    return users
